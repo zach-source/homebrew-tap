@@ -6,16 +6,16 @@ class Opx < Formula
   on_macos do
     on_arm do
       url "https://github.com/zach-source/opx/releases/download/v0.1.2/opx-server_v0.1.2_darwin_arm64.tar.gz"
-      sha256 "0000000000000000000000000000000000000000000000000000000000000000" # TODO: Update
+      sha256 "36cdbed53682e8d4713530698053d9c5e5356bc6c456b12051f0530783d85750"
       
       resource "client" do
         url "https://github.com/zach-source/opx/releases/download/v0.1.2/opx-client_v0.1.2_darwin_arm64.tar.gz"
-        sha256 "0000000000000000000000000000000000000000000000000000000000000000" # TODO: Update
+        sha256 "e522c68a2298320ce6bd249a566eda3fdd70475ca0efd3d18f53626e4da6c8b8"
       end
     end
   end
 
-  depends_on "1password-cli"
+  depends_on "1password"
 
   def install
     # Install pre-built binaries
