@@ -4,31 +4,33 @@ class Opx < Formula
   license "MIT"
 
   on_macos do
-    url "https://github.com/zach-source/opx/archive/refs/tags/v0.1.2.tar.gz"
-    sha256 "0000000000000000000000000000000000000000000000000000000000000000" # TODO: Update with actual SHA
+    on_arm do
+      url "https://github.com/zach-source/opx/releases/download/v0.1.2/opx-server_v0.1.2_darwin_arm64.tar.gz"
+      sha256 "0000000000000000000000000000000000000000000000000000000000000000" # TODO: Update
+      
+      resource "client" do
+        url "https://github.com/zach-source/opx/releases/download/v0.1.2/opx-client_v0.1.2_darwin_arm64.tar.gz"
+        sha256 "0000000000000000000000000000000000000000000000000000000000000000" # TODO: Update
+      end
+    end
   end
 
-  depends_on "go" => :build
   depends_on "1password-cli"
 
   def install
-    # Build from source since we need CGO for macOS Security framework
-    system "go", "build", *std_go_args(ldflags: "-s -w -X main.version=#{version}"), "./cmd/opx-authd"
-    system "go", "build", *std_go_args(ldflags: "-s -w -X main.version=#{version}"), "./cmd/opx"
-    
-    # Install binaries
+    # Install pre-built binaries
     bin.install "opx-authd"
-    bin.install "opx"
+    
+    # Install client binary from resource
+    resource("client").stage do
+      bin.install "opx"
+    end
     
     # Install documentation
-    doc.install "README.md"
-    doc.install "CURRENT_STATUS.md" if File.exist?("CURRENT_STATUS.md")
+    doc.install "README.md" if File.exist?("README.md")
+    doc.install "LICENSE" if File.exist?("LICENSE")
     
-    # Install example configuration
-    (etc/"opx-authd").mkpath
-    (etc/"opx-authd").install "examples/policy.json" => "policy.json.example" if File.exist?("examples/policy.json")
-    
-    # Create XDG directories
+    # Create directories
     (var/"lib/opx-authd").mkpath
     (var/"log/opx-authd").mkpath
   end
