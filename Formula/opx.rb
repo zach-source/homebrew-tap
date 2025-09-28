@@ -5,12 +5,12 @@ class Opx < Formula
 
   on_macos do
     on_arm do
-      url "https://github.com/zach-source/opx/releases/download/v0.4.0/opx-server_0.4.0_darwin_arm64_signed.tar.gz"
-      sha256 "f38a7e793ec93831910ab1b6fdc8ab39bef0e14d85e9e5c901534cb3f8bf085e"
+      url "https://github.com/zach-source/opx/releases/download/v0.5.0/opx-server_v0.5.0_darwin_arm64_signed.tar.gz"
+      sha256 "52f5aab23becb352e96e56ad7ed2cbb96359c88193a6fe9e4663d0fa6c3b8790"
       
       resource "client" do
-        url "https://github.com/zach-source/opx/releases/download/v0.4.0/opx-client_0.4.0_darwin_arm64_signed.tar.gz"
-        sha256 "578a6912ba12af29e7513f4aad73246b220674dce0d7f26a5825282e6428b700"
+        url "https://github.com/zach-source/opx/releases/download/v0.5.0/opx-client_v0.5.0_darwin_arm64_signed.tar.gz"
+        sha256 "67964c7f4bb94ba269b0ebc26550401c0ad6a19a1e844b2eb6a0b283b57bdec4"
       end
     end
   end
