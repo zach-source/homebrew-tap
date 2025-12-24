@@ -10,18 +10,21 @@ permissions:
 jobs:
   update:
     name: Update Formula
-    runs-on: ubuntu-latest
+    runs-on: macos-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
       - name: Update formula
+        id: update
         run: |
           VERSION="${{ github.event.client_payload.version }}"
           DARWIN_ARM64="${{ github.event.client_payload.darwin_arm64_sha256 }}"
           DARWIN_AMD64="${{ github.event.client_payload.darwin_amd64_sha256 }}"
           LINUX_ARM64="${{ github.event.client_payload.linux_arm64_sha256 }}"
           LINUX_AMD64="${{ github.event.client_payload.linux_amd64_sha256 }}"
+
+          echo "VERSION=${VERSION}" >> $GITHUB_OUTPUT
 
           cat > Formula/nixfleet.rb << EOF
           class Nixfleet < Formula
@@ -68,10 +71,27 @@ jobs:
           end
           EOF
 
-      - name: Commit and push
+      - name: Verify formula syntax
+        run: |
+          brew tap zach-source/tap "$(pwd)"
+          brew audit --strict Formula/nixfleet.rb || echo "Audit warnings (non-fatal)"
+
+      - name: Test formula installation
+        run: |
+          brew install --build-from-source Formula/nixfleet.rb
+          nixfleet --version
+          brew test nixfleet
+
+      - name: Commit changes
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add Formula/nixfleet.rb
-          git commit -m "Update nixfleet to v${{ github.event.client_payload.version }}"
+          git commit -m "Update nixfleet to v${{ steps.update.outputs.VERSION }}"
           git push
+
+      - name: Create version tag
+        run: |
+          VERSION="v${{ steps.update.outputs.VERSION }}"
+          git tag -a "${VERSION}" -m "NixFleet ${VERSION}"
+          git push origin "${VERSION}"
