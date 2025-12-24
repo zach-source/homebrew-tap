@@ -1,0 +1,77 @@
+name: Update NixFleet Formula
+
+on:
+  repository_dispatch:
+    types: [nixfleet-release]
+
+permissions:
+  contents: write
+
+jobs:
+  update:
+    name: Update Formula
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Update formula
+        run: |
+          VERSION="${{ github.event.client_payload.version }}"
+          DARWIN_ARM64="${{ github.event.client_payload.darwin_arm64_sha256 }}"
+          DARWIN_AMD64="${{ github.event.client_payload.darwin_amd64_sha256 }}"
+          LINUX_ARM64="${{ github.event.client_payload.linux_arm64_sha256 }}"
+          LINUX_AMD64="${{ github.event.client_payload.linux_amd64_sha256 }}"
+
+          cat > Formula/nixfleet.rb << EOF
+          class Nixfleet < Formula
+            desc "Fleet management CLI for deploying Nix configurations to non-NixOS hosts"
+            homepage "https://github.com/zach-source/nix-fleet"
+            version "${VERSION}"
+            license "MIT"
+
+            on_macos do
+              on_arm do
+                url "https://github.com/zach-source/nix-fleet/releases/download/v${VERSION}/nixfleet-darwin-arm64.tar.gz"
+                sha256 "${DARWIN_ARM64}"
+              end
+
+              on_intel do
+                url "https://github.com/zach-source/nix-fleet/releases/download/v${VERSION}/nixfleet-darwin-amd64.tar.gz"
+                sha256 "${DARWIN_AMD64}"
+              end
+            end
+
+            on_linux do
+              on_arm do
+                url "https://github.com/zach-source/nix-fleet/releases/download/v${VERSION}/nixfleet-linux-arm64.tar.gz"
+                sha256 "${LINUX_ARM64}"
+              end
+
+              on_intel do
+                url "https://github.com/zach-source/nix-fleet/releases/download/v${VERSION}/nixfleet-linux-amd64.tar.gz"
+                sha256 "${LINUX_AMD64}"
+              end
+            end
+
+            def install
+              bin.install "nixfleet-darwin-arm64" => "nixfleet" if Hardware::CPU.arm? && OS.mac?
+              bin.install "nixfleet-darwin-amd64" => "nixfleet" if Hardware::CPU.intel? && OS.mac?
+              bin.install "nixfleet-linux-arm64" => "nixfleet" if Hardware::CPU.arm? && OS.linux?
+              bin.install "nixfleet-linux-amd64" => "nixfleet" if Hardware::CPU.intel? && OS.linux?
+            end
+
+            test do
+              assert_match "nixfleet", shell_output("#{bin}/nixfleet --help")
+              assert_match version.to_s, shell_output("#{bin}/nixfleet --version")
+            end
+          end
+          EOF
+
+      - name: Commit and push
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add Formula/nixfleet.rb
+          git commit -m "Update nixfleet to v${{ github.event.client_payload.version }}"
+          git push
