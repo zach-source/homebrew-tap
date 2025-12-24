@@ -74,13 +74,13 @@ jobs:
       - name: Verify formula syntax
         run: |
           brew tap zach-source/tap "$(pwd)"
-          brew audit --strict Formula/nixfleet.rb || echo "Audit warnings (non-fatal)"
+          brew audit --strict zach-source/tap/nixfleet || echo "Audit warnings (non-fatal)"
 
       - name: Test formula installation
         run: |
-          brew install --build-from-source Formula/nixfleet.rb
+          brew install --build-from-source zach-source/tap/nixfleet
           nixfleet --version
-          brew test nixfleet
+          brew test zach-source/tap/nixfleet
 
       - name: Commit changes
         run: |
