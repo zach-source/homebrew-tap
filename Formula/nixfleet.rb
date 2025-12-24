@@ -1,30 +1,30 @@
 class Nixfleet < Formula
   desc "Fleet management CLI for deploying Nix configurations to non-NixOS hosts"
   homepage "https://github.com/zach-source/nix-fleet"
-  version "0.1.0"
+  version "0.1.1"
   license "MIT"
 
   on_macos do
     on_arm do
-      url "https://github.com/zach-source/nix-fleet/releases/download/v0.1.0/nixfleet-darwin-arm64.tar.gz"
-      sha256 "64476cc82186b520c3bee610150d266679eb51c51c9eee6b113525f24a1ba5f1"
+      url "https://github.com/zach-source/nix-fleet/releases/download/v0.1.1/nixfleet-darwin-arm64.tar.gz"
+      sha256 "46c972621806e743c303a721e8b36f552433269a88c0aac79fb6c026fc72908f"
     end
 
     on_intel do
-      url "https://github.com/zach-source/nix-fleet/releases/download/v0.1.0/nixfleet-darwin-amd64.tar.gz"
-      sha256 "b052d9a9d50344efa94770cb6a3a3c03ecb3c0462bc2a21dbc786aab16dcb2bd"
+      url "https://github.com/zach-source/nix-fleet/releases/download/v0.1.1/nixfleet-darwin-amd64.tar.gz"
+      sha256 "b7850c52f3a37d073f7a9bc63ced8e2dd2d2bb0faf17bfb8583ba1a1573eef0d"
     end
   end
 
   on_linux do
     on_arm do
-      url "https://github.com/zach-source/nix-fleet/releases/download/v0.1.0/nixfleet-linux-arm64.tar.gz"
-      sha256 "3f5d5900131bbb662774db48e0f9586aa1619806bfaedefb8193e75823f2da60"
+      url "https://github.com/zach-source/nix-fleet/releases/download/v0.1.1/nixfleet-linux-arm64.tar.gz"
+      sha256 "79025d961ad3faf3819d26cd47f6152a412aba5932f1f908a671e54ca7383bb8"
     end
 
     on_intel do
-      url "https://github.com/zach-source/nix-fleet/releases/download/v0.1.0/nixfleet-linux-amd64.tar.gz"
-      sha256 "c667f837ee7358895b523643d71e9fe73b71c7ac2d32723b4995a1ec302a6e7e"
+      url "https://github.com/zach-source/nix-fleet/releases/download/v0.1.1/nixfleet-linux-amd64.tar.gz"
+      sha256 "ad9e1fdb3870107be328920d27fc98502f1ce9b59eaf24da7d26ec1bceb7b65a"
     end
   end
 
