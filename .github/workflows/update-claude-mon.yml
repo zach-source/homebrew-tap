@@ -1,0 +1,108 @@
+name: Update claude-mon Formula
+
+on:
+  repository_dispatch:
+    types: [claude-mon-release]
+
+permissions:
+  contents: write
+
+jobs:
+  update:
+    name: Update Formula
+    runs-on: macos-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Update formula
+        id: update
+        run: |
+          VERSION="${{ github.event.client_payload.version }}"
+          DARWIN_ARM64="${{ github.event.client_payload.darwin_arm64_sha256 }}"
+          DARWIN_AMD64="${{ github.event.client_payload.darwin_amd64_sha256 }}"
+          LINUX_ARM64="${{ github.event.client_payload.linux_arm64_sha256 }}"
+          LINUX_AMD64="${{ github.event.client_payload.linux_amd64_sha256 }}"
+
+          echo "VERSION=${VERSION}" >> $GITHUB_OUTPUT
+
+          cat > Formula/claude-mon.rb << 'EOF'
+          class ClaudeMon < Formula
+            desc "TUI application for watching Claude Code edits in real-time and managing prompts"
+            homepage "https://github.com/zach-source/claude-mon"
+            version "VERSION_PLACEHOLDER"
+            license "MIT"
+
+            on_macos do
+              on_arm do
+                url "https://github.com/zach-source/claude-mon/releases/download/vVERSION_PLACEHOLDER/claude-mon-darwin-arm64.tar.gz"
+                sha256 "DARWIN_ARM64_PLACEHOLDER"
+              end
+
+              on_intel do
+                url "https://github.com/zach-source/claude-mon/releases/download/vVERSION_PLACEHOLDER/claude-mon-darwin-amd64.tar.gz"
+                sha256 "DARWIN_AMD64_PLACEHOLDER"
+              end
+            end
+
+            on_linux do
+              on_arm do
+                url "https://github.com/zach-source/claude-mon/releases/download/vVERSION_PLACEHOLDER/claude-mon-linux-arm64.tar.gz"
+                sha256 "LINUX_ARM64_PLACEHOLDER"
+              end
+
+              on_intel do
+                url "https://github.com/zach-source/claude-mon/releases/download/vVERSION_PLACEHOLDER/claude-mon-linux-amd64.tar.gz"
+                sha256 "LINUX_AMD64_PLACEHOLDER"
+              end
+            end
+
+            def install
+              bin.install "claude-mon-darwin-arm64" => "claude-mon" if Hardware::CPU.arm? && OS.mac?
+              bin.install "claude-mon-darwin-amd64" => "claude-mon" if Hardware::CPU.intel? && OS.mac?
+              bin.install "claude-mon-linux-arm64" => "claude-mon" if Hardware::CPU.arm? && OS.linux?
+              bin.install "claude-mon-linux-amd64" => "claude-mon" if Hardware::CPU.intel? && OS.linux?
+
+              # Create symlink for short name
+              bin.install_symlink "claude-mon" => "clmon"
+            end
+
+            test do
+              assert_match "claude-mon", shell_output("#{bin}/claude-mon --help")
+              assert_match version.to_s, shell_output("#{bin}/claude-mon --version")
+            end
+          end
+          EOF
+
+          # Replace placeholders
+          sed -i '' "s/VERSION_PLACEHOLDER/${VERSION}/g" Formula/claude-mon.rb
+          sed -i '' "s/DARWIN_ARM64_PLACEHOLDER/${DARWIN_ARM64}/g" Formula/claude-mon.rb
+          sed -i '' "s/DARWIN_AMD64_PLACEHOLDER/${DARWIN_AMD64}/g" Formula/claude-mon.rb
+          sed -i '' "s/LINUX_ARM64_PLACEHOLDER/${LINUX_ARM64}/g" Formula/claude-mon.rb
+          sed -i '' "s/LINUX_AMD64_PLACEHOLDER/${LINUX_AMD64}/g" Formula/claude-mon.rb
+
+      - name: Verify formula syntax
+        run: |
+          brew tap zach-source/tap "$(pwd)"
+          brew audit --strict zach-source/tap/claude-mon || echo "Audit warnings (non-fatal)"
+
+      - name: Test formula installation
+        run: |
+          brew install --build-from-source zach-source/tap/claude-mon
+          claude-mon --version
+          clmon --version
+          brew test zach-source/tap/claude-mon
+
+      - name: Commit changes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add Formula/claude-mon.rb
+          git commit -m "Update claude-mon to v${{ steps.update.outputs.VERSION }}"
+          git push
+
+      - name: Create version tag
+        run: |
+          VERSION="v${{ steps.update.outputs.VERSION }}"
+          git tag -a "${VERSION}" -m "claude-mon ${VERSION}"
+          git push origin "${VERSION}"
