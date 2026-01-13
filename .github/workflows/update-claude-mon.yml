@@ -67,6 +67,22 @@ jobs:
               bin.install_symlink "claude-mon" => "clmon"
             end
 
+            def post_install
+              (var/"claude-mon").mkpath
+            end
+
+            service do
+              run [bin/"claude-mon", "daemon", "start"]
+              keep_alive true
+              log_path var/"claude-mon/claude-mon.log"
+              error_log_path var/"claude-mon/claude-mon-error.log"
+              environment_variables(
+                CLAUDE_MON_DATA_DIR: var/"claude-mon",
+                CLAUDE_MON_DAEMON_SOCKET: "/tmp/claude-mon-daemon.sock",
+                CLAUDE_MON_QUERY_SOCKET: "/tmp/claude-mon-query.sock"
+              )
+            end
+
             test do
               assert_match "claude-mon", shell_output("#{bin}/claude-mon --help")
               assert_match version.to_s, shell_output("#{bin}/claude-mon --version")
