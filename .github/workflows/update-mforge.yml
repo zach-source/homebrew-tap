@@ -1,0 +1,97 @@
+name: Update Mforge Formula
+
+on:
+  repository_dispatch:
+    types: [mforge-release]
+
+permissions:
+  contents: write
+
+jobs:
+  update:
+    name: Update Formula
+    runs-on: macos-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Update formula
+        id: update
+        run: |
+          VERSION="${{ github.event.client_payload.version }}"
+          DARWIN_ARM64="${{ github.event.client_payload.darwin_arm64_sha256 }}"
+          DARWIN_AMD64="${{ github.event.client_payload.darwin_amd64_sha256 }}"
+          LINUX_ARM64="${{ github.event.client_payload.linux_arm64_sha256 }}"
+          LINUX_AMD64="${{ github.event.client_payload.linux_amd64_sha256 }}"
+
+          echo "VERSION=${VERSION}" >> $GITHUB_OUTPUT
+
+          cat > Formula/mforge.rb << EOF
+          class Mforge < Formula
+            desc "CLI that orchestrates Claude Code agents as a multi-role system for microservices"
+            homepage "https://github.com/zach-source/microforge"
+            version "${VERSION}"
+            license "MIT"
+
+            on_macos do
+              on_arm do
+                url "https://github.com/zach-source/microforge/releases/download/v${VERSION}/mforge-darwin-arm64.tar.gz"
+                sha256 "${DARWIN_ARM64}"
+              end
+
+              on_intel do
+                url "https://github.com/zach-source/microforge/releases/download/v${VERSION}/mforge-darwin-amd64.tar.gz"
+                sha256 "${DARWIN_AMD64}"
+              end
+            end
+
+            on_linux do
+              on_arm do
+                url "https://github.com/zach-source/microforge/releases/download/v${VERSION}/mforge-linux-arm64.tar.gz"
+                sha256 "${LINUX_ARM64}"
+              end
+
+              on_intel do
+                url "https://github.com/zach-source/microforge/releases/download/v${VERSION}/mforge-linux-amd64.tar.gz"
+                sha256 "${LINUX_AMD64}"
+              end
+            end
+
+            def install
+              bin.install "mforge-darwin-arm64" => "mforge" if Hardware::CPU.arm? && OS.mac?
+              bin.install "mforge-darwin-amd64" => "mforge" if Hardware::CPU.intel? && OS.mac?
+              bin.install "mforge-linux-arm64" => "mforge" if Hardware::CPU.arm? && OS.linux?
+              bin.install "mforge-linux-amd64" => "mforge" if Hardware::CPU.intel? && OS.linux?
+            end
+
+            test do
+              assert_match "mforge", shell_output("#{bin}/mforge --help")
+              assert_match version.to_s, shell_output("#{bin}/mforge --version")
+            end
+          end
+          EOF
+
+      - name: Verify formula syntax
+        run: |
+          brew tap zach-source/tap "$(pwd)"
+          brew audit --strict zach-source/tap/mforge || echo "Audit warnings (non-fatal)"
+
+      - name: Test formula installation
+        run: |
+          brew install --build-from-source zach-source/tap/mforge
+          mforge --version
+          brew test zach-source/tap/mforge
+
+      - name: Commit changes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add Formula/mforge.rb
+          git commit -m "Update mforge to v${{ steps.update.outputs.VERSION }}"
+          git push
+
+      - name: Create version tag
+        run: |
+          VERSION="mforge-v${{ steps.update.outputs.VERSION }}"
+          git tag -a "${VERSION}" -m "Mforge ${VERSION}"
+          git push origin "${VERSION}"
